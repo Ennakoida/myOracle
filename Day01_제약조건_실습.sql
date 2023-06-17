@@ -1,0 +1,262 @@
+-- 제약조건 실습
+-- 테이블 생성 ( DDL - CREATE, ALTER, DROP )
+CREATE TABLE USER_NO_CONSTRAINT (
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20), -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30),
+    USER_NAME VARCHAR2(30),
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50)
+);
+
+INSERT INTO USER_NO_CONSTRAINT VALUES (1, 'khuser01', 'pass01', '일용자', '남', '010654654786', 'khuser01@lei.or.kr');
+INSERT INTO USER_NO_CONSTRAINT VALUES (2, 'khuser02', 'pass02', '일용자', '남', '010654654786', 'khuser01@lei.or.kr');
+INSERT INTO USER_NO_CONSTRAINT VALUES (3, NULL, NULL, NULL,  '남', '010654654786', 'khuser01@lei.or.kr') ;
+
+SELECT * FROM USER_NO_CONSTRAINT;
+COMMIT; -- TCL (TRANSACTION CONTROL LANGUAGE)
+
+-- ***********************************
+
+-- INSERT NULL 불가
+CREATE TABLE USER_CONSTRAINT (
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20) NOT NULL, -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50)
+);
+
+SELECT * FROM USER_CONSTRAINT;
+INSERT INTO USER_CONSTRAINT VALUES(1,'khuser01','pass01', '일용자', '남', '01029023849', 'khuser01@naver.com');
+INSERT INTO USER_CONSTRAINT VALUES(1,'NULL','NULL', 'NULL', '남', '01029023849', 'khuser01@naver.com');
+
+SELECT * FROM USER_NO_CONSTRAINT;
+-- OPA-00942 : table or view does not exist : 테이블명 오타
+-- OPA-00904 : "USER_PW" " : invalid identifier : 칼럼명 오타
+-- 데이터 추가( DML : insert, update, delete, select )
+INSERT INTO USER_NO_CONSTRAINT VALUES (2, 'khuser02', 'pass02', '이용자', '남', '01049844544', 'khuser02@nate.com');
+
+-- ******************************************
+
+-- 중복 금지
+CREATE TABLE USER_UNIQUE (
+    USER_NO NUMBER,
+    USER_ID VARCHAR2(20) UNIQUE, -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50)
+);
+
+DROP TABLE USER_UNIQUE;
+
+-- 데이터 추가 ( INSERT INTO
+INSERT INTO USER_UNIQUE VALUES (1, 'khuser01', 'pass01', '일용자', '남', '01068546222', 'khuser01@kakao.com');
+-- ORA-00001: unique constraint (KHUSER01.SYS_C007002) violated
+-- 같은 값을 넣으려고 함!!! 의 오류보고
+
+INSERT INTO USER_UNIQUE VALUES (1, null, 'pass01', '일용자', '남', '01068546222', 'khuser01@kakao.com');
+
+SELECT * FROM USER_UNIQUE;
+
+-- *******************************************
+
+-- PK
+CREATE TABLE USER_PRIMARYKEY (
+    USER_NO NUMBER UNIQUE,
+    USER_ID VARCHAR2(20) CONSTRAINT USER_ID_PRIMARY_KEY PRIMARY KEY, -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50)
+);
+
+INSERT INTO USER_PRIMARYKEY VALUES (1, 'khuser01', 'pass01', '일용자', '남', '01023445678', 'khuser01@kh.com');
+INSERT INTO USER_PRIMARYKEY VALUES (2, 'khuser01', 'pass01', '일용자', '남', '01023445678', 'khuser01@kh.com');
+-- ORA-00001: unique constraint (KHUSER01.SYS_C007007) violated
+-- 테이블의 제약조건의 코드를 확인하면 된다. (KHUSER01.SYS_C007007)
+
+SELECT * FROM USER_PRIMARYKEY;
+
+DROP TABLE USER_PRIMARYKEY;
+
+-- *******************************************
+
+CREATE TABLE USER_CHECK (
+    USER_NO NUMBER UNIQUE,
+    USER_ID VARCHAR2(20) CONSTRAINT U_ID_PRIMARY_KEY PRIMARY KEY, -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10) CHECK(USER_GENDER IN('M', 'F')),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50)
+);
+
+INSERT INTO USER_CHECK VALUES (1, 'khuser01', 'pass01', '일용자', '남', '01023445678', 'khuser01@kh.com');
+-- ORA-02290: check constraint (KHUSER01.SYS_C007021) violated
+-- '남' 안됨!! 테이블 생성 때 IN('M', 'F')를 줬음!!
+INSERT INTO USER_CHECK VALUES (1, 'khuser01', 'pass01', '일용자', 'M', '01023445678', 'khuser01@kh.com');
+
+SELECT * FROM USER_CHECK;
+COMMIT;
+
+-- *******************************************
+
+-- DEFAULT 제약조건
+CREATE TABLE USER_DEFAULT (
+    USER_NO NUMBER UNIQUE,
+    USER_ID VARCHAR2(20) PRIMARY KEY, -- 한글(3Byte)로 6글자
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10) CHECK(USER_GENDER IN('M', 'F')),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50),
+    USER_DATE DATE DEFAULT SYSDATE -- SYSDATE : 오늘 날짜
+);
+
+DROP TABLE USER_DEFAULT;
+
+INSERT INTO USER_DEFAULT VALUES (1, 'khuser01', 'pass01', '일용자', 'M', '01023445678', 'khuser01@kh.com', NULL);
+-- DEFAULT : DEFAULT로 정해둔 값을 쓰겠다
+INSERT INTO USER_DEFAULT VALUES (2, 'khuser02', 'pass02', '일용자', 'M', '01023445678', 'khuser01@kh.com', DEFAULT);
+INSERT INTO USER_DEFAULT VALUES (3, 'khuser03', 'pass03', '일용자', 'M', '01023445678', 'khuser01@kh.com', SYSDATE);
+
+SELECT * FROM USER_DEFAULT;
+
+-- *******************************************
+
+-- FOREIGN KEY 외래키 제약조건
+-- 참조되는 테이블 / 부모 테이블
+CREATE TABLE USER_GRADE (
+    GRADE_CODE NUMBER PRIMARY KEY,
+    GARDE_NAME VARCHAR2(30) NOT NULL
+);
+
+DROP TABLE USER_GRADE;
+
+INSERT INTO USER_GRADE VALUES (10, '일반회원');
+INSERT INTO USER_GRADE VALUES (20, '우수회원');
+INSERT INTO USER_GRADE VALUES (30, '특별회원');
+-- INSERT INTO USER_GRADE VALUES (40, 'VIP회원'); : 아래에 FOREIGNKEY 쓰려면 필요함
+INSERT INTO USER_GRADE VALUES (40, 'VIP회원');
+
+-- 부모 테이블의 데이터를 삭제하려고 할 때
+DELETE FROM USER_GRADE WHERE GRADE_CODE = 40;
+-- ORA-02292: integrity constraint (KHUSER01.SYS_C007053) violated - child record found
+-- 자식 있어서 못지움 (자식을 지우고 부모를 지우면 지워진다.)
+
+
+SELECT * FROM USER_GRADE;
+COMMIT;
+
+-- ***
+
+-- 참조하는 자식 테이블
+CREATE TABLE USER_FOREIGNKEY (
+    USER_NO NUMBER PRIMARY KEY,
+    USER_ID VARCHAR2(20) UNIQUE,
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30) NOT NULL,
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50),
+    GRADE_CODE NUMBER REFERENCES USER_GRADE(GRADE_CODE)
+    --FOREIGN KEY (GRADE_CODE) REFERENCES USER_GRADE(GRADE_CODE)
+);
+
+DROP TABLE USER_FOREIGNKEY;
+
+INSERT INTO USER_FOREIGNKEY VALUES (1, 'khuser01', 'pass01', '일용자', '남', '01023445678', 'khuser01@kh.com', 10);
+INSERT INTO USER_FOREIGNKEY VALUES (2, 'khuser02', 'pass02', '일용자', '남', '01023445678', 'khuser01@kh.com', 20);
+INSERT INTO USER_FOREIGNKEY VALUES (3, 'khuser03', 'pass03', '일용자', '남', '01023445678', 'khuser01@kh.com', 30);
+
+INSERT INTO USER_FOREIGNKEY VALUES (4, 'khuser04', 'pass04', '일용자', '남', '01023445678', 'khuser01@kh.com', 40);
+-- FOREIGNKEY 오류 : 부모키 없음! (부모키의 값만 넣을 수 있음. 만약 넣고싶다면 부모키부터 INSERT 해줘야함)
+-- ORA-02291: integrity constraint (KHUSER01.SYS_C007053) violated - parent key not found
+
+SELECT * FROM USER_FOREIGNKEY;
+COMMIT;
+
+
+-- ***
+
+-- 외래키 삭제 옵션
+-- 기본 옵션 : ON DELETE RESTRICTED
+-- 연관된 모든 것 삭제 옵션 : ON DELETE CASCADE
+-- NULL로 만드는 옵션 : ON DELETE SET NULL
+-- 이 옵션은 외래키 설정 시에 같이 적어주어야 적용된다
+
+CREATE TABLE USER_FOREIGNKEY(
+    USER_NO NUMBER PRIMARY KEY,
+    USER_ID VARCHAR2(20) UNIQUE,
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    USER_GENDER VARCHAR2(10),
+    USER_PHONE VARCHAR2(30),
+    USER_EMAIL VARCHAR2(50),
+    GRADE_CODE NUMBER REFERENCES USER_GRADE(GRADE_CODE) ON DELETE CASCADE
+    --FOREIGN KEY(GRADE_CODE) REFERENCES USER_GRADE(GRADE_CODE)
+);
+
+DROP TABLE USER_FOREIGNKEY;
+
+SELECT * FROM USER_FOREIGNKEY;
+SELECT * FROM USER_GRADE;
+DELETE FROM USER_GRADE WHERE GRADE_CODE = 40;
+
+COMMIT;
+
+-- ***
+
+-- 세줄 요약
+-- 1. 외래키 (자식테이블)가 참조한은 부모테이블 결정 데이터는 기본적으로 지워지지 않음
+-- 2. ON DELETE CASCADE 옵션은 부모테이블 데이터를 지워주고 자식테이블 데이터도 지움
+-- 3. ON DELETE SET NULL 옵션은 부모테이블 데이터를 지워주고 자식테이블 데이터는 NULL로 만들어줌
+
+-- SHOP 고객 테이블 (부모)
+CREATE TABLE SHOP_MEMBER(
+    USER_NO NUMBER UNIQUE,
+    USER_ID VARCHAR2(20) PRIMARY KEY,
+    USER_PWD VARCHAR2(30) NOT NULL,
+    USER_NAME VARCHAR2(30),
+    USER_GENDER CHAR(1),
+    USER_PHONE VARCHAR2(20),
+    USER_EMAIL VARCHAR2(30)
+ );
+ 
+INSERT INTO SHOP_MEMBER VALUES (1, 'khuser01', 'pass01', '일용자', 'M', '01023445678', 'khuser01@kh.com');
+INSERT INTO SHOP_MEMBER VALUES (2, 'khuser02', 'pass02', '일용자', 'M', '01021236728', 'khuser02@kh.com');
+INSERT INTO SHOP_MEMBER VALUES (3, 'khuser03', 'pass03', '일용자', 'M', '01042548778', 'khuser03@kh.com');
+INSERT INTO SHOP_MEMBER VALUES (4, 'khuser04', 'pass04', '일용자', 'M', '01023753836', 'khuser04@kh.com');
+
+DELETE FROM SHOP_MEMEBER WHERE USER_NO = 1;
+DROP TABLE SHOP_MEMBER;
+
+SELECT * FROM SHOP_MEMBER;
+
+-- SHOP 구매 내역 테이블 (자식)
+CREATE TABLE SHOP_BUY (
+    BUY_NO NUMBER PRIMARY KEY,
+    USER_ID VARCHAR2(30) REFERENCES SHOP_MEMBER(USER_ID) ON DELETE SET NULL,
+    PRODUCT_NAME VARCHAR2(20),
+    REG_DAGE DATE DEFAULT SYSDATE
+);
+
+INSERT INTO SHOP_BUY VALUES (1, 'khuser01', '뉴발850', DEFAULT);
+-- INSERT INTO SHOP_BUY VALUES (1, 'khuser011', '뉴발850', DEFAULT); 
+-- ORA-00001: unique constraint (KHUSER01.SYS_C007071) violated
+-- khuser011은 부모테이블에 X -> insert 불가
+INSERT INTO SHOP_BUY VALUES (2, 'khuser02', '농구화', DEFAULT);
+INSERT INTO SHOP_BUY VALUES (3, 'khuser03', '등산화', DEFAULT);
+INSERT INTO SHOP_BUY VALUES (4, 'khuser04', '워커', DEFAULT);
+
+DROP TABLE SHOP_BUY;
+
+SELECT * FROM SHOP_BUY;
+
